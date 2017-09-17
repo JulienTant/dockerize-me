@@ -21,7 +21,7 @@
     ]
   },
   "require": {
-    "symfony/console": "^3.3",
+    "symfony/console": "~2.5||~3.0",
     "cocur/slugify": "^3.0"
   }
 }
