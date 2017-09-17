@@ -1,0 +1,55 @@
+version: '2.1'
+services:
+  app:
+    build:
+      context: ./docker/app
+    image: {#PROJET_NAME#}/app:latest
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - .:/var/www/html:cached
+    networks:
+      - {#PROJET_NAME#}_net
+  redis:
+    build:
+      context: ./docker/redis
+    image: {#PROJET_NAME#}/redis:latest
+    volumes:
+      - redisdata:/data
+    networks:
+      - {#PROJET_NAME#}_net
+
+  mysql:
+    build:
+      context: ./docker/mysql
+    image: {#PROJET_NAME#}/mysql:latest
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: {#PROJET_NAME#}
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: secret
+    volumes:
+      - mysqldata:/var/lib/mysql
+    networks:
+      - {#PROJET_NAME#}_net
+
+  node:
+    build:
+      context: ./docker/node
+    image: {#PROJET_NAME#}/node:latest
+    volumes:
+      - .:/var/www/html
+
+
+volumes:
+  redisdata:
+    driver: local
+  mysqldata:
+    driver: local
+
+networks:
+  {#PROJET_NAME#}_net:
+    driver: bridge

@@ -1,0 +1,27 @@
+{
+  "name": "jtant/dockerize-me",
+  "description": "Add some docker magic to your project",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Julien Tant",
+      "email": "julien@craftyx.fr"
+    }
+  ],
+  "bin": [
+    "dockerize-me"
+  ],
+  "autoload": {
+    "psr-4": {
+      "DockerizeMe\\": "src/"
+    },
+    "files": [
+      "src/start.php"
+    ]
+  },
+  "require": {
+    "symfony/console": "^3.3",
+    "cocur/slugify": "^3.0"
+  }
+}
