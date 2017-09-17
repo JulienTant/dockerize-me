@@ -57,4 +57,6 @@ RUN openssl genrsa -des3 -passout pass:x -out server.pass.key 2048 \
 EXPOSE 80
 EXPOSE 443
 
+WORKDIR /var/www/html
+
 CMD ["supervisord"]

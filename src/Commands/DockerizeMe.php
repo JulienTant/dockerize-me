@@ -3,6 +3,8 @@
 namespace DockerizeMe\Commands;
 
 use Cocur\Slugify\Slugify;
+use DockerizeMe\Guessers\Guessable;
+use DockerizeMe\Guessers\Guesser;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Symfony\Component\Console\Command\Command;
@@ -31,20 +33,27 @@ class DockerizeMe extends Command
      * @var OutputInterface
      */
     private $output;
+    /**
+     * @var Guesser
+     */
+    private $guesser;
 
-    public function __construct($name = null)
+    public function __construct(Slugify $slugify, Guesser $guesser)
     {
-        $this->slugifier = new Slugify();
-        parent::__construct($name);
+        $this->slugifier = $slugify;
+        $this->guesser = $guesser;
+
+        parent::__construct();
     }
 
     protected function configure()
     {
         $position = explode(DIRECTORY_SEPARATOR, getcwd());
+
         $this->setName('dockerize-me')
             ->setDescription('Add some docker magic to your PHP application')
             ->setHelp('This command adds a docker-compose file to your projects and the Dockerfile associated.')
-            ->addOption('name', null, InputOption::VALUE_REQUIRED, 'Project name (will be slugified)', $this->slugifier->slugify(end($position)))
+            ->addOption('project-name', null, InputOption::VALUE_REQUIRED, 'Project name (will be slugified)', $this->slugifier->slugify(end($position)))
             ->addOption('php', null, InputOption::VALUE_REQUIRED, 'Wanted php version (7.0 | 7.1)', '7.1')
             ->addOption('mysql', null, InputOption::VALUE_REQUIRED, 'Wanted mysql version', '5.7')
             ->addOption('redis', null, InputOption::VALUE_REQUIRED, 'Wanted redis version', '3.2')
@@ -57,20 +66,35 @@ class DockerizeMe extends Command
         $this->output = $output;
 
 
-        $projectName = $this->slugifier->slugify($input->getOption('name'));
+        $projectName = $this->slugifier->slugify($input->getOption('project-name'));
         $phpVersion = $input->getOption('php');
         $mysqlVersion = $input->getOption('mysql');
         $redisVersion = $input->getOption('redis');
         $nodeVersion = $input->getOption('node');
 
+        $projectType = $this->guesser->find(realpath('.'));
+
         $this->ensurePHPVersion($phpVersion);
         $this->ensureFilesDoesntExists();
 
+
         $this->sayHello();
-        $this->showSelectedVersions($projectName, $phpVersion, $mysqlVersion, $redisVersion, $nodeVersion);
+        $this->showSelectedVersions($projectName, $projectType, $phpVersion, $mysqlVersion, $redisVersion, $nodeVersion);
         $this->askContinue($input, $output);
-        $this->copyStubs($projectName, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion);
-        $this->infoln("We're ready! You can now `./dcp up` !");
+        $this->copyStubs($projectName, $projectType, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion);
+
+        $tips = $projectType->tips();
+        if ($tips != "") {
+            $this->output->writeln("");
+            $this->infoln("Tips for your project type:");
+            $this->commentln($tips);
+            $this->output->writeln("");
+        }
+
+
+        $this->infoln("We're ready! You can now customize your docker-compose.yml file, and then `./dcp up`.");
+        $this->infoln("Remember that MySQL & Redis are not accessible on 127.0.0.1 from your php application,");
+        $this->infoln("but from their name : mysql / redis.");
     }
 
     private function ensurePHPVersion($phpVersion)
@@ -112,9 +136,11 @@ class DockerizeMe extends Command
      * @param $redisVersion
      * @param $nodeVersion
      */
-    protected function showSelectedVersions($projectName, $phpVersion, $mysqlVersion, $redisVersion, $nodeVersion)
+    protected function showSelectedVersions($projectName, Guessable $projectType, $phpVersion, $mysqlVersion, $redisVersion, $nodeVersion)
     {
         $this->writeVersion("Project name", $projectName);
+        $this->writeVersion("Project type", $projectType->name());
+
         $this->writeVersion("PHP", $phpVersion);
         $this->writeVersion("MySQL", $mysqlVersion);
         $this->writeVersion("Redis", $redisVersion);
@@ -144,7 +170,7 @@ class DockerizeMe extends Command
      * @param $nodeVersion
      * @param $redisVersion
      */
-    protected function copyStubs($projectName, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion)
+    protected function copyStubs($projectName, Guessable $projectType, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion)
     {
         $this->info("Working...");
         $path = realpath(__DIR__ . '/../../stubs');
@@ -154,13 +180,25 @@ class DockerizeMe extends Command
             if ($object->isDir()) {
                 mkdir($target . DIRECTORY_SEPARATOR . $objects->getSubPathName());
             } elseif ($object->isFile()) {
+                $filePath = $objects->getSubPathName();
+
+                $nginxDefaultTypeRegex = '/^(docker\/app\/default)\.(.+)$/';
+                preg_match($nginxDefaultTypeRegex, $objects->getSubPathName(), $matches);
+
+                if (count($matches) === 3) {
+                    if ($matches[2] !== $projectType->name()) {
+                        continue;
+                    }
+                    $filePath = $matches[1];
+                }
+
                 $content = str_replace(
                     ["{#PROJET_NAME#}", "{#PHP_VERSION#}", "{#MYSQL_VERSION#}", "{#NODE_VERSION#}", "{#REDIS_VERSION#}"],
                     [$projectName, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion],
                     file_get_contents($name)
                 );
 
-                file_put_contents($target . DIRECTORY_SEPARATOR . $objects->getSubPathName(), $content);
+                file_put_contents($target . DIRECTORY_SEPARATOR . $filePath, $content);
                 unset($content);
             }
         }
@@ -190,5 +228,10 @@ class DockerizeMe extends Command
     private function writeVersion($tool, $version)
     {
         $this->output->writeln("\t<info>" . $tool . ":</info> <comment>" . $version . "</comment>");
+    }
+
+    private function commentln($str)
+    {
+        $this->output->writeln('<comment>' . $str . '</comment>');
     }
 }
