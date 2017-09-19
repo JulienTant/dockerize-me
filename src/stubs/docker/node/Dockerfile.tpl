@@ -1,3 +1,3 @@
-FROM redis:3.2
+FROM node:<?=$nodeVersion?>
 
 MAINTAINER Julien Tant <julien@craftyx.fr>

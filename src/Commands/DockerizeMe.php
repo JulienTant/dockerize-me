@@ -3,8 +3,12 @@
 namespace DockerizeMe\Commands;
 
 use Cocur\Slugify\Slugify;
+use DockerizeMe\FileProcessors\FileProcessor;
 use DockerizeMe\Guessers\Guessable;
 use DockerizeMe\Guessers\Guesser;
+use DockerizeMe\ProjectContext;
+use DockerizeMe\ProjectTypes\ProjectType;
+use League\Plates\Engine;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Symfony\Component\Console\Command\Command;
@@ -37,11 +41,16 @@ class DockerizeMe extends Command
      * @var Guesser
      */
     private $guesser;
+    /**
+     * @var Engine
+     */
+    private $templates;
 
-    public function __construct(Slugify $slugify, Guesser $guesser)
+    public function __construct(Slugify $slugify, Guesser $guesser, Engine $tplEngine)
     {
         $this->slugifier = $slugify;
         $this->guesser = $guesser;
+        $this->templates = $tplEngine;
 
         parent::__construct();
     }
@@ -66,24 +75,26 @@ class DockerizeMe extends Command
         $this->output = $output;
 
 
-        $projectName = $this->slugifier->slugify($input->getOption('project-name'));
-        $phpVersion = $input->getOption('php');
-        $mysqlVersion = $input->getOption('mysql');
-        $redisVersion = $input->getOption('redis');
-        $nodeVersion = $input->getOption('node');
+        $ctx = new ProjectContext;
+        $ctx->projectName = $this->slugifier->slugify($input->getOption('project-name'));
+        $ctx->projectType = $this->guesser->find(realpath('.'));
+        $ctx->phpVersion = $input->getOption('php');
+        $ctx->mysqlVersion = $input->getOption('mysql');
+        $ctx->redisVersion = $input->getOption('redis');
+        $ctx->nodeVersion = $input->getOption('node');
 
-        $projectType = $this->guesser->find(realpath('.'));
 
-        $this->ensurePHPVersion($phpVersion);
+        $this->ensurePHPVersion($ctx);
         $this->ensureFilesDoesntExists();
 
 
         $this->sayHello();
-        $this->showSelectedVersions($projectName, $projectType, $phpVersion, $mysqlVersion, $redisVersion, $nodeVersion);
+        $this->showSelectedVersions($ctx);
         $this->askContinue($input, $output);
-        $this->copyStubs($projectName, $projectType, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion);
 
-        $tips = $projectType->tips();
+        $this->copyStubs($ctx);
+
+        $tips = $ctx->projectType->tips();
         if ($tips != "") {
             $this->output->writeln("");
             $this->infoln("Tips for your project type:");
@@ -97,10 +108,10 @@ class DockerizeMe extends Command
         $this->infoln("but from their name : mysql / redis.");
     }
 
-    private function ensurePHPVersion($phpVersion)
+    private function ensurePHPVersion(ProjectContext $ctx)
     {
         $possibilities = ["7.0", "7.1"];
-        foreach ($possibilities as $possibility) if ($phpVersion === $possibility) {
+        foreach ($possibilities as $possibility) if ($ctx->phpVersion === $possibility) {
             return;
         }
 
@@ -130,21 +141,17 @@ class DockerizeMe extends Command
     }
 
     /**
-     * @param $projectName
-     * @param $phpVersion
-     * @param $mysqlVersion
-     * @param $redisVersion
-     * @param $nodeVersion
+     * @param ProjectContext $ctx
      */
-    protected function showSelectedVersions($projectName, Guessable $projectType, $phpVersion, $mysqlVersion, $redisVersion, $nodeVersion)
+    protected function showSelectedVersions(ProjectContext $ctx)
     {
-        $this->writeVersion("Project name", $projectName);
-        $this->writeVersion("Project type", $projectType->name());
+        $this->writeVersion("Project name", $ctx->projectName);
+        $this->writeVersion("Project type", $ctx->projectType->name());
 
-        $this->writeVersion("PHP", $phpVersion);
-        $this->writeVersion("MySQL", $mysqlVersion);
-        $this->writeVersion("Redis", $redisVersion);
-        $this->writeVersion("NodeJS", $nodeVersion);
+        $this->writeVersion("PHP", $ctx->phpVersion);
+        $this->writeVersion("MySQL", $ctx->mysqlVersion);
+        $this->writeVersion("Redis", $ctx->redisVersion);
+        $this->writeVersion("NodeJS", $ctx->nodeVersion);
 
         $this->output->writeln("");
     }
@@ -164,39 +171,30 @@ class DockerizeMe extends Command
     }
 
     /**
-     * @param $projectName
-     * @param $phpVersion
-     * @param $mysqlVersion
-     * @param $nodeVersion
-     * @param $redisVersion
+     * @param ProjectContext $ctx
      */
-    protected function copyStubs($projectName, Guessable $projectType, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion)
+    protected function copyStubs(ProjectContext $ctx)
     {
         $this->info("Working...");
-        $path = realpath(__DIR__ . '/../../stubs');
+
+        $path = $this->templates->getDirectory();
         $target = realpath('.');
+
+        $this->templates->addData($ctx->toArray());
+
         $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
         foreach ($objects as $name => $object) {
+            /** @var \SplFileInfo $object */
             if ($object->isDir()) {
                 mkdir($target . DIRECTORY_SEPARATOR . $objects->getSubPathName());
             } elseif ($object->isFile()) {
-                $filePath = $objects->getSubPathName();
+                $filePath = str_replace('.tpl', '', $objects->getSubPathName());
 
-                $nginxDefaultTypeRegex = '/^(docker\/app\/default)\.(.+)$/';
-                preg_match($nginxDefaultTypeRegex, $objects->getSubPathName(), $matches);
-
-                if (count($matches) === 3) {
-                    if ($matches[2] !== $projectType->name()) {
-                        continue;
-                    }
-                    $filePath = $matches[1];
+                if (substr($object->getFilename(), 0, 2) === "__") {
+                    continue;
                 }
 
-                $content = str_replace(
-                    ["{#PROJET_NAME#}", "{#PHP_VERSION#}", "{#MYSQL_VERSION#}", "{#NODE_VERSION#}", "{#REDIS_VERSION#}"],
-                    [$projectName, $phpVersion, $mysqlVersion, $nodeVersion, $redisVersion],
-                    file_get_contents($name)
-                );
+                $content = $this->templates->render($filePath);
 
                 file_put_contents($target . DIRECTORY_SEPARATOR . $filePath, $content);
                 unset($content);

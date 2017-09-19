@@ -1,7 +1,9 @@
 <?php
-namespace DockerizeMe\Guessers;
+namespace DockerizeMe\ProjectTypes;
 
-class Symfony implements Guessable
+use DockerizeMe\Guessers\Guessable;
+
+class Symfony extends ProjectType implements Guessable
 {
     /**
      * Tells if the projects is of that kind

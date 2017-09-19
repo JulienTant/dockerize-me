@@ -1,0 +1,1 @@
+<?php $this->insert('docker/app/__default.' . $projectType->name()); ?>

@@ -19,11 +19,11 @@ server {
 
     location ~ ^/(app_dev|config)\.php(/|$) {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php{#PHP_VERSION#}-fpm.sock;
+        fastcgi_pass unix:/run/php/php<?=$phpVersion?>-fpm.sock;
     }
 
     location ~ ^/app\.php(/|$) {
-        fastcgi_pass unix:/run/php/php{#PHP_VERSION#}-fpm.sock;
+        fastcgi_pass unix:/run/php/php<?=$phpVersion?>-fpm.sock;
         include snippets/fastcgi-php.conf;
         internal;
     }

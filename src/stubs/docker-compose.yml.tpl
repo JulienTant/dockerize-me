@@ -2,54 +2,55 @@ version: '2.1'
 services:
   app:
     build:
-      context: ./docker/app
-    image: {#PROJET_NAME#}/app:latest
+      context: docker/app
+    image: <?=$projectName?>/app:latest
     ports:
       - 80:80
       - 443:443
     volumes:
       - .:/var/www/html:cached
     networks:
-      - {#PROJET_NAME#}_net
+      - <?=$projectName?>_net
+
   redis:
     build:
       context: ./docker/redis
-    image: {#PROJET_NAME#}/redis:latest
+    image: <?=$projectName?>/redis:latest
     volumes:
-      - redisdata:/data
+      - <?=$projectName?>_redisdata:/data
     networks:
-      - {#PROJET_NAME#}_net
+      - <?=$projectName?>_net
 
   mysql:
     build:
       context: ./docker/mysql
-    image: {#PROJET_NAME#}/mysql:latest
+    image: <?=$projectName?>/mysql:latest
     ports:
       - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: {#PROJET_NAME#}
+      MYSQL_DATABASE: <?=$projectName . "\n"?>
       MYSQL_USER: homestead
       MYSQL_PASSWORD: secret
     volumes:
-      - mysqldata:/var/lib/mysql
+      - <?=$projectName?>_mysqldata:/var/lib/mysql
     networks:
-      - {#PROJET_NAME#}_net
+      - <?=$projectName?>_net
 
   node:
     build:
       context: ./docker/node
-    image: {#PROJET_NAME#}/node:latest
+    image: <?=$projectName?>/node:latest
     volumes:
       - .:/var/www/html
 
 
 volumes:
-  redisdata:
+  <?=$projectName?>_redisdata:
     driver: local
-  mysqldata:
+  <?=$projectName?>_mysqldata:
     driver: local
 
 networks:
-  {#PROJET_NAME#}_net:
+  <?=$projectName?>_net:
     driver: bridge

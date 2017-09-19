@@ -1,3 +1,3 @@
-FROM mysql:{#MYSQL_VERSION#}
+FROM mysql:<?=$mysqlVersion?>
 
 MAINTAINER Julien Tant <julien@craftyx.fr>

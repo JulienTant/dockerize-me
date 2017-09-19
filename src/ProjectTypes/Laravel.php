@@ -1,7 +1,10 @@
 <?php
-namespace DockerizeMe\Guessers;
 
-class Laravel implements Guessable
+namespace DockerizeMe\ProjectTypes;
+
+use DockerizeMe\Guessers\Guessable;
+
+class Laravel extends ProjectType implements Guessable
 {
     /**
      * Tells if the projects is of that kind
@@ -11,7 +14,7 @@ class Laravel implements Guessable
      */
     public function guess($basePath)
     {
-        return is_file($basePath .'/artisan') && is_file($basePath .'/public/index.php');
+        return is_file($basePath . '/artisan') && is_file($basePath . '/public/index.php');
     }
 
     /**

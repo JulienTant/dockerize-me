@@ -16,19 +16,19 @@ RUN add-apt-repository ppa:nginx/stable \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
         nginx \
-        php{#PHP_VERSION#}-fpm \
-        php{#PHP_VERSION#}-cli \
-        php{#PHP_VERSION#}-xdebug \
-        php{#PHP_VERSION#}-pdo \
-        php{#PHP_VERSION#}-pdo-mysql \
-        php{#PHP_VERSION#}-sqlite3 \
-        php{#PHP_VERSION#}-xml \
-        php{#PHP_VERSION#}-mbstring \
-        php{#PHP_VERSION#}-tokenizer \
-        php{#PHP_VERSION#}-zip \
-        php{#PHP_VERSION#}-mcrypt \
-        php{#PHP_VERSION#}-gd \
-        php{#PHP_VERSION#}-curl \
+        php<?=$phpVersion?>-fpm \
+        php<?=$phpVersion?>-cli \
+        php<?=$phpVersion?>-xdebug \
+        php<?=$phpVersion?>-pdo \
+        php<?=$phpVersion?>-pdo-mysql \
+        php<?=$phpVersion?>-sqlite3 \
+        php<?=$phpVersion?>-xml \
+        php<?=$phpVersion?>-mbstring \
+        php<?=$phpVersion?>-tokenizer \
+        php<?=$phpVersion?>-zip \
+        php<?=$phpVersion?>-mcrypt \
+        php<?=$phpVersion?>-gd \
+        php<?=$phpVersion?>-curl \
         curl \
     && mkdir /run/php \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
@@ -38,7 +38,7 @@ RUN add-apt-repository ppa:nginx/stable \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY default /etc/nginx/sites-enabled/default
-COPY php-fpm.conf /etc/php/{#PHP_VERSION#}/fpm/php-fpm.conf
+COPY php-fpm.conf /etc/php/<?=$phpVersion?>/fpm/php-fpm.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN mkdir /tmp/certgen

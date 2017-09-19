@@ -1,8 +1,10 @@
 <?php
-namespace DockerizeMe\Guessers;
+namespace DockerizeMe\ProjectTypes;
 
 
-class Normal implements Guessable
+use DockerizeMe\Guessers\Guessable;
+
+class Normal extends ProjectType implements Guessable
 {
     /**
      * Tells if the projects is of that kind

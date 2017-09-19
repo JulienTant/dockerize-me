@@ -3,6 +3,8 @@
 namespace DockerizeMe\Guessers;
 
 
+use DockerizeMe\ProjectTypes\Normal;
+
 class Guesser
 {
     /**
