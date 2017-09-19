@@ -43,8 +43,17 @@ services:
     image: <?=$projectName?>/node:latest
     volumes:
       - .:/var/www/html
+<?php if ($withBlackfire): ?>
 
+  blackfire:
+    image: blackfire/blackfire
+    environment:
+      BLACKFIRE_SERVER_ID: SERVER-ID
+      BLACKFIRE_SERVER_TOKEN: SERVER-TOKEN
+    networks:
+    - <?=$projectName?>_net
 
+<?php endif; ?>
 volumes:
   <?=$projectName?>_redisdata:
     driver: local

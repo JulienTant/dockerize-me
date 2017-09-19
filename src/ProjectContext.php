@@ -31,6 +31,11 @@ class ProjectContext
      */
     public $nodeVersion;
 
+    /**
+     * @var bool
+     */
+    public $withBlackfire;
+
     public function toArray()
     {
         return get_object_vars($this);

@@ -3,11 +3,8 @@
 namespace DockerizeMe\Commands;
 
 use Cocur\Slugify\Slugify;
-use DockerizeMe\FileProcessors\FileProcessor;
-use DockerizeMe\Guessers\Guessable;
 use DockerizeMe\Guessers\Guesser;
 use DockerizeMe\ProjectContext;
-use DockerizeMe\ProjectTypes\ProjectType;
 use League\Plates\Engine;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -66,7 +63,8 @@ class DockerizeMe extends Command
             ->addOption('php', null, InputOption::VALUE_REQUIRED, 'Wanted php version (7.0 | 7.1)', '7.1')
             ->addOption('mysql', null, InputOption::VALUE_REQUIRED, 'Wanted mysql version', '5.7')
             ->addOption('redis', null, InputOption::VALUE_REQUIRED, 'Wanted redis version', '3.2')
-            ->addOption('node', null, InputOption::VALUE_REQUIRED, 'Wanted node version', 'latest');
+            ->addOption('node', null, InputOption::VALUE_REQUIRED, 'Wanted node version', 'latest')
+            ->addOption('with-blackfire', null, InputOption::VALUE_NONE, 'Install blackfire');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -82,7 +80,7 @@ class DockerizeMe extends Command
         $ctx->mysqlVersion = $input->getOption('mysql');
         $ctx->redisVersion = $input->getOption('redis');
         $ctx->nodeVersion = $input->getOption('node');
-
+        $ctx->withBlackfire = $input->getOption('with-blackfire');
 
         $this->ensurePHPVersion($ctx);
         $this->ensureFilesDoesntExists();
@@ -103,9 +101,14 @@ class DockerizeMe extends Command
         }
 
 
-        $this->infoln("We're ready! You can now customize your docker-compose.yml file, and then `./dcp up`.");
+        $this->infoln("");
+        $this->commentln("We're ready!");
+        $this->infoln("You can now customize your docker-compose.yml file, and then `./dcp up`.");
         $this->infoln("Remember that MySQL & Redis are not accessible on 127.0.0.1 from your php application,");
         $this->infoln("but from their name : mysql / redis.");
+        if ($ctx->withBlackfire) {
+            $this->commentln("Blackfire: don't forget to set the BLACKFIRE_SERVER_ID and BLACKFIRE_SERVER_TOKEN variables in the `docker-compose.yml` file");
+        }
     }
 
     private function ensurePHPVersion(ProjectContext $ctx)
@@ -152,6 +155,9 @@ class DockerizeMe extends Command
         $this->writeVersion("MySQL", $ctx->mysqlVersion);
         $this->writeVersion("Redis", $ctx->redisVersion);
         $this->writeVersion("NodeJS", $ctx->nodeVersion);
+        if ($ctx->withBlackfire) {
+            $this->writeVersion("Blackfire", "installed");
+        }
 
         $this->output->writeln("");
     }
@@ -184,7 +190,6 @@ class DockerizeMe extends Command
 
         $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
         foreach ($objects as $name => $object) {
-            /** @var \SplFileInfo $object */
             if ($object->isDir()) {
                 mkdir($target . DIRECTORY_SEPARATOR . $objects->getSubPathName());
             } elseif ($object->isFile()) {
@@ -203,7 +208,7 @@ class DockerizeMe extends Command
         $this->infoln(" done.");
 
         if (!chmod($target . DIRECTORY_SEPARATOR . 'dcp', 0755)) {
-            $this->infoln('Warning: please set chmod 755 on ' . $target . DIRECTORY_SEPARATOR . 'dcp !');
+            $this->commentln('Warning: please set chmod 755 on ' . $target . DIRECTORY_SEPARATOR . 'dcp !');
         }
     }
 

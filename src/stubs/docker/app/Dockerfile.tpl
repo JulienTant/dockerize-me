@@ -32,10 +32,19 @@ RUN add-apt-repository ppa:nginx/stable \
         curl \
     && mkdir /run/php \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+<?php if($withBlackfire): ?>
+    && version=$(php -r "echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;") \
+    && curl -A "Docker" -o /tmp/blackfire-probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/linux/amd64/$version \
+    && tar zxpf /tmp/blackfire-probe.tar.gz -C /tmp \
+    && mv /tmp/blackfire-*.so $(php -r "echo ini_get('extension_dir');")/blackfire.so \
+    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://blackfire:8707\n" > /etc/php/<?=$phpVersion?>/mods-available/blackfire.ini \
+    && phpenmod blackfire \
+<?php endif; ?>
     && apt-get remove -y --purge software-properties-common curl \
     && apt-get clean \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 
 COPY default /etc/nginx/sites-enabled/default
 COPY php-fpm.conf /etc/php/<?=$phpVersion?>/fpm/php-fpm.conf
@@ -51,8 +60,6 @@ RUN openssl genrsa -des3 -passout pass:x -out server.pass.key 2048 \
     && cp server.crt /etc/ssl/certs/ \
     && cp server.key /etc/ssl/private/ \
     && rm -rf /tmp/certgen
-
-
 
 EXPOSE 80
 EXPOSE 443
