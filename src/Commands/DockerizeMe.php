@@ -64,7 +64,8 @@ class DockerizeMe extends Command
             ->addOption('mysql', null, InputOption::VALUE_REQUIRED, 'Wanted mysql version', '5.7')
             ->addOption('redis', null, InputOption::VALUE_REQUIRED, 'Wanted redis version', '3.2')
             ->addOption('node', null, InputOption::VALUE_REQUIRED, 'Wanted node version', 'latest')
-            ->addOption('with-blackfire', null, InputOption::VALUE_NONE, 'Install blackfire');
+            ->addOption('with-blackfire', null, InputOption::VALUE_NONE, 'Install blackfire')
+            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Overwrite existing dockerize-me files');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -83,11 +84,15 @@ class DockerizeMe extends Command
         $ctx->withBlackfire = $input->getOption('with-blackfire');
 
         $this->ensurePHPVersion($ctx);
-        $this->ensureFilesDoesntExists();
-
+        if ($input->getOption('force') === false) {
+            $this->ensureFilesDoesntExists();
+        }
 
         $this->sayHello();
         $this->showSelectedVersions($ctx);
+        if ($input->getOption('force') === true) {
+            $this->errorln('You selected the force flag. This will overwrite existing files.');
+        }
         $this->askContinue($input, $output);
 
         $this->copyStubs($ctx);
@@ -190,7 +195,7 @@ class DockerizeMe extends Command
 
         $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
         foreach ($objects as $name => $object) {
-            if ($object->isDir()) {
+            if ($object->isDir() && !is_dir($object->getRealPath())) {
                 mkdir($target . DIRECTORY_SEPARATOR . $objects->getSubPathName());
             } elseif ($object->isFile()) {
                 $filePath = str_replace('.tpl', '', $objects->getSubPathName());
