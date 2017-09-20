@@ -118,7 +118,7 @@ class DockerizeMe extends Command
 
     private function ensurePHPVersion(ProjectContext $ctx)
     {
-        $possibilities = ["7.0", "7.1", "7.2"];
+        $possibilities = ["7.0", "7.1"];
         foreach ($possibilities as $possibility) if ($ctx->phpVersion === $possibility) {
             return;
         }
