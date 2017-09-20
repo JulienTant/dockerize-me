@@ -37,17 +37,31 @@ If you don't want to install it globally, you can also choose to install it per 
 * Redis: 3.2 - Available: https://hub.docker.com/_/redis/
 * Node: latest - Available: https://hub.docker.com/_/node/
 
-You can change version using `--php`, `--mysql`, `--redis`, `--node` while calling `dockerize-me`. 
+You can change versions by using `--php`, `--mysql`, `--redis`, `--node` while calling `dockerize-me`.
 
 ## How to use it ?
 
 ### Globally
 
-Go to your project and type `dockerize-me`. You can see the options available using `dockerize-me -h`.
+Go to your project and type `dockerize-me`.
 
 ### Per project
 
-Go to your project and type `./vendor/bin/dockerize-me`. You can see the options available using `./vendor/bin/dockerize-me -h`.
+Go to your project and type `./vendor/bin/dockerize-me`.
+
+### Available options
+
+* `--project-name=xx` - change the name of your project. By default, it will be the folder name.
+* `--php=xx` - choose your PHP version
+* `--mysql=xx` - choose your mysql version
+* `--redis=xx` - choose your redis version
+* `--node=xx` - choose your node version
+* `--with-blackfire` - adds Blackfire (see https://github.com/JulienTant/dockerize-me/wiki/Installing-Blackfire)
+* `--force` - overrides files if they already exists. **If you've modified a generated file, you will loose your modifications! Use with caution**
+* `--no-interaction` or `-n` - automatically answers the default options to the questions.
+* `-h` - show all the options
+
+This list may not be exhaustive, I recommend you use  `dockerize-me -h` to see all options.
 
 ### Both
 
