@@ -2,7 +2,7 @@ version: '2.1'
 services:
   app:
     build:
-      context: docker/app
+      context: ./docker/app
     image: <?=$projectName?>/app:latest
     ports:
       - 80:80
