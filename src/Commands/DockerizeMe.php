@@ -118,7 +118,7 @@ class DockerizeMe extends Command
 
     private function ensurePHPVersion(ProjectContext $ctx)
     {
-        $possibilities = ["7.0", "7.1"];
+        $possibilities = ["7.0", "7.1", "7.2"];
         foreach ($possibilities as $possibility) if ($ctx->phpVersion === $possibility) {
             return;
         }
@@ -195,7 +195,7 @@ class DockerizeMe extends Command
 
         $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
         foreach ($objects as $name => $object) {
-            if ($object->isDir() && !is_dir($object->getRealPath())) {
+            if ($object->isDir() && !is_dir($target . DIRECTORY_SEPARATOR . $objects->getSubPathName())) {
                 mkdir($target . DIRECTORY_SEPARATOR . $objects->getSubPathName());
             } elseif ($object->isFile()) {
                 $filePath = str_replace('.tpl', '', $objects->getSubPathName());
