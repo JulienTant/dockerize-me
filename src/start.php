@@ -7,13 +7,14 @@ use DockerizeMe\Guessers\Guesser;
 use DockerizeMe\ProjectTypes\Laravel;
 use DockerizeMe\ProjectTypes\Normal;
 use DockerizeMe\ProjectTypes\Symfony;
+use DockerizeMe\ProjectTypes\Symfony4;
 use League\Plates\Engine;
 use Symfony\Component\Console\Application;
 
 function start()
 {
     $slugify = new Slugify();
-    $guesser = new Guesser(new Laravel(), new Symfony(), new Normal());
+    $guesser = new Guesser(new Laravel(), new Symfony(), new Symfony4(), new Normal());
     $tplEngine = new Engine(__DIR__ .'/stubs', 'tpl');
 
     $application = new Application();
