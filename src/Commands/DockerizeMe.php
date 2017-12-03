@@ -60,7 +60,7 @@ class DockerizeMe extends Command
             ->setDescription('Add some docker magic to your PHP application')
             ->setHelp('This command adds a docker-compose file to your projects and the Dockerfile associated.')
             ->addOption('project-name', null, InputOption::VALUE_REQUIRED, 'Project name (will be slugified)', $this->slugifier->slugify(end($position)))
-            ->addOption('php', null, InputOption::VALUE_REQUIRED, 'Wanted php version (7.0 | 7.1)', '7.1')
+            ->addOption('php', null, InputOption::VALUE_REQUIRED, 'Wanted php version (7.0 | 7.1 | 7.2)', '7.2')
             ->addOption('mysql', null, InputOption::VALUE_REQUIRED, 'Wanted mysql version', '5.7')
             ->addOption('redis', null, InputOption::VALUE_REQUIRED, 'Wanted redis version', '3.2')
             ->addOption('node', null, InputOption::VALUE_REQUIRED, 'Wanted node version', 'latest')
@@ -118,12 +118,12 @@ class DockerizeMe extends Command
 
     private function ensurePHPVersion(ProjectContext $ctx)
     {
-        $possibilities = ["7.0", "7.1"];
+        $possibilities = ["7.0", "7.1", "7.2"];
         foreach ($possibilities as $possibility) if ($ctx->phpVersion === $possibility) {
             return;
         }
 
-        $this->errorln("PHP version must be one of the following : [7.0|7.1]");
+        $this->errorln("PHP version must be one of the following : [7.0|7.1|7.2]");
         exit(self::INVALID_PHP_VERSION);
     }
 
