@@ -29,6 +29,7 @@ RUN add-apt-repository ppa:nginx/stable \
         php<?=$phpVersion?>-mcrypt \
         php<?=$phpVersion?>-gd \
         php<?=$phpVersion?>-curl \
+        php<?=$phpVersion?>-intl \
         curl \
     && mkdir /run/php \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
