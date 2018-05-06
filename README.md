@@ -86,7 +86,7 @@ Here is what it can do:
 * `dcp npm`: execute `npm` in a node container.
 * (Laravel specific) `dcp artisan`: execute an `php artisan` into the app container.
 * (Symfony2 specific) `dcp app/console`: execute `php app/console` into the app container.
-* (Symfony3 specific) `dcp bin/console`: execute `php bin/console` into the app container.
+* (Symfony3 and Symfony4 specific) `dcp bin/console`: execute `php bin/console` into the app container.
 
 As a fallback, any other command will be passed to `docker-compose`.
 
